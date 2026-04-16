@@ -1,8 +1,8 @@
-import { IsInt, Min } from 'class-validator';
+import { IsOptional} from 'class-validator';
 import { BaseSeatDto } from './base-seat.dto';
+import { Theater } from 'src/theaters/entities/theater.entity';
 
 export class CreateSeatDto extends BaseSeatDto {
-    @IsInt()
-    @Min(1)
-    theater!: number;
+    @IsOptional()
+    theater?: Theater;
 }

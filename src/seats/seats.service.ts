@@ -4,19 +4,29 @@ import { Repository, DeepPartial } from 'typeorm';
 import { Seat } from './entities/seat.entity';
 import { CreateSeatDto } from './dto/create-seat.dto';
 import { UpdateSeatDto } from './dto/update-seat.dto';
+import { TheatersService } from 'src/theaters/theaters.service';
 
 @Injectable()
 export class SeatsService {
   constructor(
     @InjectRepository(Seat)
     private readonly seatRepository: Repository<Seat>,
-  ) {}
+    private readonly theaterService: TheatersService
+  ) { }
 
   async create(createSeatDto: CreateSeatDto) {
-    const payload: DeepPartial<Seat> = { ...createSeatDto } as DeepPartial<Seat>;
-    if (createSeatDto.theater) payload.theater = { id: createSeatDto.theater } as any;
+    if (createSeatDto.theater) {
+      const theater = await this.theaterService
+        .findOne(createSeatDto.theater.id ?? 0)
+        .catch(() => null);
 
-    const seat = this.seatRepository.create(payload);
+      if (!theater) {
+        throw new NotFoundException('Theater id not found');
+      }
+    }
+
+    const seat = this.seatRepository.create(createSeatDto);
+
     return await this.seatRepository.save(seat);
   }
 
