@@ -13,7 +13,7 @@ export class Theater {
     @Column()
     capacity?: number;
 
-    @OneToOne(() => Projector, (projector) => projector.theater, { cascade: false })
+    @OneToOne(() => Projector, (projector) => projector.theater, { cascade: true })
     projector?: Projector;
 
     @OneToMany(() => Seat, (seat) => seat.theater, { cascade: true })

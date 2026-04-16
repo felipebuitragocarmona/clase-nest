@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Theater } from './entities/theater.entity';
@@ -44,6 +44,10 @@ export class TheatersService {
 
   async remove(id: number) {
     const theater = await this.findOne(id); // asegura que exista
+
+    if (theater.projector) {
+      throw new BadRequestException('No se puede eliminar el teatro porque tiene un proyector asociado');
+    }
 
     await this.theaterRepository.remove(theater);
 
