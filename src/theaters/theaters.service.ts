@@ -28,7 +28,7 @@ export class TheatersService {
   async findOne(id: number) {
     const theater = await this.theaterRepository.findOne({
       where: { id },
-      relations: ['projector']
+      relations: ['projector','seats']
     });
 
     if (!theater) throw new NotFoundException(`Teatro #${id} no encontrado`);
