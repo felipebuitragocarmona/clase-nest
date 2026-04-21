@@ -21,5 +21,5 @@ export class Theater {
     seats?: Seat[];
 
     @OneToMany(() => Screening, (screening) => screening.theater)
-    screenings!: Screening[];
+    screenings?: Screening[];
 }
