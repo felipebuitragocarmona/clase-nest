@@ -4,18 +4,30 @@ import { Repository } from 'typeorm';
 import { Theater } from './entities/theater.entity';
 import { CreateTheaterDto } from './dto/create-theater.dto';
 import { UpdateTheaterDto } from './dto/update-theater.dto';
+import { NotificationsGateway } from 'src/gateways/notifications/notifications.gateway';
 
 @Injectable()
 export class TheatersService {
   constructor(
     @InjectRepository(Theater)
     private readonly theaterRepository: Repository<Theater>,
+    private readonly notificationsGateway: NotificationsGateway,
   ) { }
 
   async create(createTheaterDto: CreateTheaterDto) {
     const theater = this.theaterRepository.create(createTheaterDto);
     return await this.theaterRepository.save(theater);
   }
+  async createWithNotification(createTheaterDto: CreateTheaterDto) {
+    const theater = await this.theaterRepository.save(createTheaterDto);
+    // Emitir notificación a todos los clientes conectados
+    this.notificationsGateway.broadcastNotification({
+      event: 'nuevo_teatro',
+      data: theater,
+    });
+    return theater;
+  }
+
 
   async findAll() {
     return await this.theaterRepository.find(

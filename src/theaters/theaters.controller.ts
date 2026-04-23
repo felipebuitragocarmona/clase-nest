@@ -9,7 +9,7 @@ export class TheatersController {
 
   @Post()
   create(@Body() createTheaterDto: CreateTheaterDto) {
-    return this.theatersService.create(createTheaterDto);
+    return this.theatersService.createWithNotification(createTheaterDto);
   }
 
   @Get()

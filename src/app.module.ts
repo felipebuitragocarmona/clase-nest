@@ -8,10 +8,12 @@ import { MoviesModule } from './movies/movies.module';
 import { ScreeningsModule } from './screenings/screenings.module';
 import { APP_GUARD } from '@nestjs/core';
 import { SecurityGuard } from './guards/security/security.guard';
+import { NotificationsModule } from './gateways/notifications/notifications.module';
 
 @Module({
   providers: [{ provide: APP_GUARD, useClass: SecurityGuard }],
   imports: [
+    NotificationsModule,
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -32,6 +34,7 @@ import { SecurityGuard } from './guards/security/security.guard';
     SeatsModule,
     MoviesModule,
     ScreeningsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
