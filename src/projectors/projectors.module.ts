@@ -4,13 +4,14 @@ import { ProjectorsController } from './projectors.controller';
 import { Projector } from './entities/projector.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Theater } from '../theaters/entities/theater.entity';
-import { TheatersService } from 'src/theaters/theaters.service';
+import { TheatersModule } from 'src/theaters/theaters.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Projector, Theater])
-],
+    TypeOrmModule.forFeature([Projector, Theater]),
+    TheatersModule,
+  ],
   controllers: [ProjectorsController],
-  providers: [ProjectorsService, TheatersService],
+  providers: [ProjectorsService],
 })
 export class ProjectorsModule {}

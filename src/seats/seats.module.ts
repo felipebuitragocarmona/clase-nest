@@ -4,11 +4,11 @@ import { SeatsController } from './seats.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Seat } from './entities/seat.entity';
 import { Theater } from 'src/theaters/entities/theater.entity';
-import { TheatersService } from 'src/theaters/theaters.service';
+import { TheatersModule } from 'src/theaters/theaters.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Seat, Theater])],
+  imports: [TypeOrmModule.forFeature([Seat, Theater]), TheatersModule],
   controllers: [SeatsController],
-  providers: [SeatsService, TheatersService],
+  providers: [SeatsService],
 })
 export class SeatsModule {}
