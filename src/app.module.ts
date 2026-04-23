@@ -6,8 +6,11 @@ import { ProjectorsModule } from './projectors/projectors.module';
 import { SeatsModule } from './seats/seats.module';
 import { MoviesModule } from './movies/movies.module';
 import { ScreeningsModule } from './screenings/screenings.module';
+import { APP_GUARD } from '@nestjs/core';
+import { SecurityGuard } from './guards/security/security.guard';
 
 @Module({
+  providers: [{ provide: APP_GUARD, useClass: SecurityGuard }],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
