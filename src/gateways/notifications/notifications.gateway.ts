@@ -11,8 +11,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
   cors: { origin: '*' }, // Permite conexiones desde cualquier origen
 })
-export class NotificationsGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+export class NotificationsGateway  implements OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
   server?: Server;
@@ -24,7 +23,7 @@ export class NotificationsGateway
     console.log('Query del socket:', JSON.stringify(query));
 
     // Emitir evento de bienvenida al cliente que se conectó
-    client.emit('notifications', { hello: 'world' });
+    client.emit('new_notification', { hello: 'world' });
   }
 
   // Se ejecuta cuando un cliente se desconecta
@@ -41,6 +40,6 @@ export class NotificationsGateway
 
   // Método utilitario para emitir a TODOS los clientes desde un servicio
   broadcastNotification(payload: any) {
-    this.server?.emit('notifications', payload);
+    this.server?.emit(payload.event, payload.data);
   }
 }

@@ -6,7 +6,7 @@ sio = socketio.Client()
 def connect():
     print("✅ Conectado al servidor Socket.IO")
 
-@sio.on('notifications')
+@sio.on('new_notification')
 def on_notifications(data):
     print(f"📩 Notificación recibida: {data}")
 

@@ -15,14 +15,16 @@ export class TheatersService {
   ) { }
 
   async create(createTheaterDto: CreateTheaterDto) {
+    console.log('otro');
     const theater = this.theaterRepository.create(createTheaterDto);
     return await this.theaterRepository.save(theater);
   }
   async createWithNotification(createTheaterDto: CreateTheaterDto) {
-    const theater = await this.theaterRepository.save(createTheaterDto);
-    // Emitir notificación a todos los clientes conectados
-    this.notificationsGateway.broadcastNotification({
-      event: 'nuevo_teatro',
+    console.log('iniciando');
+    const theater =  await this.theaterRepository.save(createTheaterDto);
+    console.log('Emitiendo notificación de nuevo teatro:', theater);
+    await this.notificationsGateway.broadcastNotification({
+      event: 'new_notification',
       data: theater,
     });
     return theater;
