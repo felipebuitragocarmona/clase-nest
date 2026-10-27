@@ -1,13 +1,13 @@
-# Guía NestJS — Cinema API
+# Guía NestJS paso a paso — Cinema API
 
-Guía de implementación completa para construir una API REST de cine con **NestJS**, **TypeORM** y **MySQL**, incluyendo relaciones entre entidades, validaciones, migraciones y seguridad mediante Guards.
+Guía de implementación **paso a paso** para construir una API REST de cine con **NestJS**, **TypeORM** y **MySQL**, incluyendo relaciones entre entidades, validaciones, migraciones y seguridad mediante Guards.
 
 ---
 
 ## Tabla de Contenidos
 
-1. [Arquitectura del Framework](#1-arquitectura-del-framework)
-2. [Pre-requisitos e Instalación](#2-pre-requisitos-e-instalación)
+1. [Paso 1 — Creación del proyecto](#1-paso-1--creación-del-proyecto)
+2. [Paso 2 — Arquitectura del Framework](#2-paso-2--arquitectura-del-framework)
 3. [Configuración de Base de Datos (MySQL)](#3-configuración-de-base-de-datos-mysql)
 4. [Configuración del Entorno y Conexión](#4-configuración-del-entorno-y-conexión)
 5. [Generación de Recursos (CLI)](#5-generación-de-recursos-cli)
@@ -16,10 +16,47 @@ Guía de implementación completa para construir una API REST de cine con **Nest
 8. [Lógica de Negocio (CRUD)](#8-lógica-de-negocio-crud---completo)
 9. [Migraciones](#9-migraciones)
 10. [Seguridad (Guards)](#10-seguridad-guards)
+11. [Implementar WebSocket (paso a paso y archivos a modificar)](#11-implementar-websocket-paso-a-paso-y-archivos-a-modificar)
+12. [CRUD en Nest con Mapper (lógica tipo 1_1 Primer CRUD)](#12-crud-en-nest-con-mapper-lógica-tipo-1_1-primer-crud)
 
 ---
 
-## 1. Arquitectura del Framework
+## 1. Paso 1 — Creación del proyecto
+
+### 1.1. Pre-requisitos
+
+Se requiere tener instalado **Node.js** (versión LTS recomendada).
+
+### 1.2. Instalar el CLI de NestJS
+
+```bash
+npm i -g @nestjs/cli
+```
+
+### 1.3. Crear el proyecto
+
+```bash
+nest new demo-cinema
+```
+
+### 1.4. Entrar a la carpeta del proyecto
+
+```bash
+cd demo-cinema
+```
+
+### 1.5. Instalar dependencias base del tutorial
+
+Instalamos TypeORM, MySQL, validadores y el paquete `mapped-types` para evitar errores en tipos parciales.
+
+```bash
+npm install --save @nestjs/typeorm typeorm mysql2 @nestjs/config class-validator class-transformer axios --force
+npm i @nestjs/mapped-types --force
+```
+
+---
+
+## 2. Paso 2 — Arquitectura del Framework
 
 NestJS opera bajo una arquitectura modular y escalable. Antes de iniciar la implementación, es fundamental comprender los componentes base adaptados al nuevo modelo de negocio:
 
@@ -31,42 +68,6 @@ NestJS opera bajo una arquitectura modular y escalable. Antes de iniciar la impl
 | **DTO (Data Transfer Objects)** | Definirán qué datos se envían (ej: `movie_id` y `theater_id` para crear una `Screening`). |
 | **Entidades (Entities)** | Mapeo ORM de las tablas: `Movie`, `Screening`, `Theater`, `Projector`, `Seat`. |
 | **Guards** | Autorización mediante microservicio externo. |
-
----
-
-## 2. Pre-requisitos e Instalación
-
-Se requiere tener instalado **Node.js** (versión LTS recomendada).
-
-### Instalación del CLI de NestJS
-
-```bash
-npm i -g @nestjs/cli
-```
-
-### Creación del Proyecto
-
-```bash
-nest new demo-cinema
-
-```
-
-Luego será necesario ingresar a la carpeta creada que contiene el proyecto
-
-```bash
-cd demo-cinema
-
-```
-
-### Instalación de Dependencias
-
-Instalamos TypeORM, MySQL, Validadores y el paquete `mapped-types` para evitar errores en tipos parciales.
-
-```bash
-npm install --save @nestjs/typeorm typeorm mysql2 @nestjs/config class-validator class-transformer axios --force
-
-npm i @nestjs/mapped-types --force
-```
 
 ---
 
@@ -904,6 +905,309 @@ Conéctate al servidor y valida que:
 4. `src/app.module.ts` (registro del módulo)
 5. `src/**/*.service.ts` (disparar eventos desde negocio)
 6. `clientSocket.py` (prueba del cliente)
+
+---
+
+## 12. CRUD en Nest con Mapper (lógica tipo 1_1 Primer CRUD)
+
+Esta sección replica la misma lógica pedagógica de `Entity + Repository + DTO + Mapper + Service + Controller`, pero aplicada a NestJS.
+
+### 12.1 Flujo de arquitectura
+
+```text
+REQUEST
+   │
+   ▼
+Controller
+   │
+   ▼
+DTOs (entrada)
+   │
+   ▼
+Service
+ ┌─┴─────────────┐
+ ▼               ▼
+Mapper       Repository (TypeORM)
+ │               │
+ ▼               ▼
+DTOs (salida)   Entity
+                  │
+                  ▼
+                 MySQL
+```
+
+### 12.2 Estructura sugerida para `movies`
+
+```text
+src/movies
+├── dto
+│   ├── base-movie.dto.ts
+│   ├── create-movie.dto.ts
+│   ├── update-movie.dto.ts
+│   └── movie-response.dto.ts
+├── entities
+│   └── movie.entity.ts
+├── mappers
+│   └── movie.mapper.ts
+├── movies.controller.ts
+├── movies.service.ts
+└── movies.module.ts
+```
+
+### 12.3 Entity
+
+**Archivo:** `src/movies/entities/movie.entity.ts`
+
+```typescript
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Screening } from '../../screenings/entities/screening.entity';
+
+@Entity('movies')
+export class Movie {
+  @PrimaryGeneratedColumn()
+  id!: number;
+
+  @Column()
+  name!: string;
+
+  @Column()
+  duration!: number;
+
+  @Column({ type: 'date' })
+  date!: Date;
+
+  @OneToMany(() => Screening, (screening) => screening.movie)
+  screenings!: Screening[];
+}
+```
+
+### 12.4 DTOs (entrada y salida)
+
+**Archivo:** `src/movies/dto/base-movie.dto.ts`
+
+```typescript
+import { IsDateString, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+
+export abstract class BaseMovieDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsInt()
+  @Min(1)
+  duration!: number;
+
+  @IsDateString({}, { message: 'date must be a valid ISO date (YYYY-MM-DD)' })
+  date!: string;
+}
+```
+
+**Archivo:** `src/movies/dto/create-movie.dto.ts`
+
+```typescript
+import { BaseMovieDto } from './base-movie.dto';
+
+export class CreateMovieDto extends BaseMovieDto {}
+```
+
+**Archivo:** `src/movies/dto/update-movie.dto.ts`
+
+```typescript
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateMovieDto } from './create-movie.dto';
+
+export class UpdateMovieDto extends PartialType(CreateMovieDto) {}
+```
+
+**Archivo:** `src/movies/dto/movie-response.dto.ts`
+
+```typescript
+export class MovieResponseDto {
+  id!: number;
+  name!: string;
+  duration!: number;
+  date!: string;
+}
+```
+
+### 12.5 Mapper
+
+**Archivo:** `src/movies/mappers/movie.mapper.ts`
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { CreateMovieDto } from '../dto/create-movie.dto';
+import { UpdateMovieDto } from '../dto/update-movie.dto';
+import { MovieResponseDto } from '../dto/movie-response.dto';
+import { Movie } from '../entities/movie.entity';
+
+@Injectable()
+export class MovieMapper {
+  toEntity(dto: CreateMovieDto): Movie {
+    return {
+      name: dto.name,
+      duration: dto.duration,
+      date: new Date(dto.date),
+      screenings: [],
+    } as Movie;
+  }
+
+  mergeEntity(entity: Movie, dto: UpdateMovieDto): Movie {
+    if (dto.name !== undefined) entity.name = dto.name;
+    if (dto.duration !== undefined) entity.duration = dto.duration;
+    if (dto.date !== undefined) entity.date = new Date(dto.date);
+    return entity;
+  }
+
+  toResponseDto(entity: Movie): MovieResponseDto {
+    return {
+      id: entity.id,
+      name: entity.name,
+      duration: entity.duration,
+      date: entity.date.toISOString().slice(0, 10),
+    };
+  }
+
+  toResponseDtoList(entities: Movie[]): MovieResponseDto[] {
+    return entities.map((movie) => this.toResponseDto(movie));
+  }
+}
+```
+
+### 12.6 Repository en Nest (equivalente al `UserRepository`)
+
+En Nest + TypeORM normalmente no creas una interfaz `Repository` manual para CRUD básico.
+El repositorio aparece al inyectar `Repository<Movie>` en el servicio y registrar la entidad en `TypeOrmModule.forFeature([Movie])`.
+
+### 12.7 Service con lógica de negocio + mapper
+
+**Archivo:** `src/movies/movies.service.ts`
+
+```typescript
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateMovieDto } from './dto/create-movie.dto';
+import { UpdateMovieDto } from './dto/update-movie.dto';
+import { MovieResponseDto } from './dto/movie-response.dto';
+import { Movie } from './entities/movie.entity';
+import { MovieMapper } from './mappers/movie.mapper';
+
+@Injectable()
+export class MoviesService {
+  constructor(
+    @InjectRepository(Movie)
+    private readonly moviesRepository: Repository<Movie>,
+    private readonly movieMapper: MovieMapper,
+  ) {}
+
+  async create(dto: CreateMovieDto): Promise<MovieResponseDto> {
+    const entity = this.movieMapper.toEntity(dto);
+    const saved = await this.moviesRepository.save(entity);
+    return this.movieMapper.toResponseDto(saved);
+  }
+
+  async findAll(): Promise<MovieResponseDto[]> {
+    const movies = await this.moviesRepository.find();
+    return this.movieMapper.toResponseDtoList(movies);
+  }
+
+  async findOne(id: number): Promise<MovieResponseDto> {
+    const movie = await this.moviesRepository.findOne({ where: { id } });
+    if (!movie) throw new NotFoundException(`Movie with id ${id} not found`);
+    return this.movieMapper.toResponseDto(movie);
+  }
+
+  async update(id: number, dto: UpdateMovieDto): Promise<MovieResponseDto> {
+    const movie = await this.moviesRepository.findOne({ where: { id } });
+    if (!movie) throw new NotFoundException(`Movie with id ${id} not found`);
+
+    const merged = this.movieMapper.mergeEntity(movie, dto);
+    const saved = await this.moviesRepository.save(merged);
+    return this.movieMapper.toResponseDto(saved);
+  }
+
+  async remove(id: number): Promise<void> {
+    const movie = await this.moviesRepository.findOne({ where: { id } });
+    if (!movie) throw new NotFoundException(`Movie with id ${id} not found`);
+    await this.moviesRepository.remove(movie);
+  }
+}
+```
+
+### 12.8 Controller
+
+**Archivo:** `src/movies/movies.controller.ts`
+
+```typescript
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { MoviesService } from './movies.service';
+import { CreateMovieDto } from './dto/create-movie.dto';
+import { UpdateMovieDto } from './dto/update-movie.dto';
+
+@Controller('movies')
+export class MoviesController {
+  constructor(private readonly moviesService: MoviesService) {}
+
+  @Post()
+  create(@Body() createMovieDto: CreateMovieDto) {
+    return this.moviesService.create(createMovieDto);
+  }
+
+  @Get()
+  findAll() {
+    return this.moviesService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.moviesService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateMovieDto: UpdateMovieDto) {
+    return this.moviesService.update(id, updateMovieDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.moviesService.remove(id);
+  }
+}
+```
+
+### 12.9 Module (registro de entidad y mapper)
+
+**Archivo:** `src/movies/movies.module.ts`
+
+```typescript
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MoviesService } from './movies.service';
+import { MoviesController } from './movies.controller';
+import { Movie } from './entities/movie.entity';
+import { MovieMapper } from './mappers/movie.mapper';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Movie])],
+  controllers: [MoviesController],
+  providers: [MoviesService, MovieMapper],
+})
+export class MoviesModule {}
+```
+
+### 12.10 Resumen de responsabilidades (igual que en 1_1)
+
+| Componente | Responsabilidad |
+|---|---|
+| **Entity** | Representa la tabla `movies` |
+| **DTOs** | Definen contratos de entrada/salida |
+| **Mapper** | Convierte DTO ↔ Entity |
+| **Repository** | Acceso a BD vía TypeORM |
+| **Service** | Lógica de negocio y reglas |
+| **Controller** | Endpoints HTTP |
+
+Con este patrón, tu CRUD en Nest queda alineado con la lógica de `1_1_PrimerCRUD`, pero usando convenciones de NestJS y TypeORM.
 
 ---
 
